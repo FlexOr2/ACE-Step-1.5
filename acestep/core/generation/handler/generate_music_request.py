@@ -67,9 +67,9 @@ class GenerateMusicRequestMixin:
     ) -> Dict[str, Any]:
         """Prepare runtime batch/seed/duration values for generation."""
         self.current_offload_cost = 0.0
-        actual_batch_size = batch_size if batch_size is not None else self.batch_size
-        actual_batch_size = max(1, actual_batch_size)
-        actual_batch_size = self._vram_guard_reduce_batch(actual_batch_size, audio_duration=audio_duration)
+        requested_batch_size = batch_size if batch_size is not None else self.batch_size
+        requested_batch_size = max(1, requested_batch_size)
+        actual_batch_size = self._vram_guard_reduce_batch(requested_batch_size, audio_duration=audio_duration)
         actual_seed_list, seed_value_for_ui = self.prepare_seeds(actual_batch_size, seed, use_random_seed)
 
         # Retake seeds are only resolved when the variance gate is open. Reusing
@@ -90,6 +90,7 @@ class GenerateMusicRequestMixin:
 
         return {
             "actual_batch_size": actual_batch_size,
+            "requested_batch_size": requested_batch_size,
             "actual_seed_list": actual_seed_list,
             "seed_value_for_ui": seed_value_for_ui,
             "actual_retake_seed_list": actual_retake_seed_list,

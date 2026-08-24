@@ -134,4 +134,6 @@ def build_generation_success_response(
         "dit_model": dit_model_name,
         "cot_caption": getattr(params, "cot_caption", "") or "",
         "cot_lyrics": getattr(params, "cot_lyrics", "") or "",
+        "requested_batch_size": getattr(result, "requested_batch_size", None),
+        "delivered_batch_size": getattr(result, "delivered_batch_size", None),
     }

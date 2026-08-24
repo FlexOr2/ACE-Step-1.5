@@ -88,6 +88,8 @@ def update_local_cache(
             seed_value = result.get("seed_value", "")
             lm_model = result.get("lm_model", "")
             dit_model = result.get("dit_model", "")
+            requested_batch_size = result.get("requested_batch_size")
+            delivered_batch_size = result.get("delivered_batch_size")
 
             if audio_paths:
                 result_data = [
@@ -104,6 +106,8 @@ def update_local_cache(
                         "seed_value": seed_value,
                         "lm_model": lm_model,
                         "dit_model": dit_model,
+                        "requested_batch_size": requested_batch_size,
+                        "delivered_batch_size": delivered_batch_size,
                         "progress": 1.0,
                         "stage": "succeeded",
                     }
@@ -123,6 +127,8 @@ def update_local_cache(
                     "seed_value": seed_value,
                     "lm_model": lm_model,
                     "dit_model": dit_model,
+                    "requested_batch_size": requested_batch_size,
+                    "delivered_batch_size": delivered_batch_size,
                     "progress": 1.0,
                     "stage": "succeeded",
                 }]

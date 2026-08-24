@@ -332,6 +332,7 @@ class GenerateMusicMixin:
             retake_variance=retake_variance,
         )
         actual_batch_size = runtime["actual_batch_size"]
+        requested_batch_size = runtime["requested_batch_size"]
         actual_seed_list = runtime["actual_seed_list"]
         seed_value_for_ui = runtime["seed_value_for_ui"]
         actual_retake_seed_list = runtime["actual_retake_seed_list"]
@@ -490,6 +491,7 @@ class GenerateMusicMixin:
                 time_costs=time_costs,
                 seed_value_for_ui=seed_value_for_ui,
                 actual_batch_size=actual_batch_size,
+                requested_batch_size=requested_batch_size,
                 progress=progress,
                 retake_seed_value_for_ui=retake_seed_value_for_ui,
                 retake_variance=retake_variance,

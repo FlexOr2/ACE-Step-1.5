@@ -58,8 +58,28 @@ class GenerateMusicRequestMixinTests(unittest.TestCase):
             use_random_seed=False,
         )
         self.assertEqual(out["actual_batch_size"], 1)
+        self.assertEqual(out["requested_batch_size"], 1)
         self.assertIsNone(out["audio_duration"])
         self.assertIsNone(out["repainting_end"])
+
+    def test_prepare_runtime_reports_requested_batch_separately_from_vram_guard_reduction(self):
+        """Requested batch size must survive a VRAM-guard reduction unchanged.
+
+        A caller asking for batch_size=2 that gets reduced to 1 by the VRAM
+        guard must be able to tell the two numbers apart downstream instead
+        of only ever seeing the reduced value.
+        """
+        host = _Host()
+        host._vram_guard_reduce_batch = lambda bs, audio_duration=None: 1
+        out = host._prepare_generate_music_runtime(
+            batch_size=2,
+            audio_duration=None,
+            repainting_end=None,
+            seed=7,
+            use_random_seed=False,
+        )
+        self.assertEqual(out["requested_batch_size"], 2)
+        self.assertEqual(out["actual_batch_size"], 1)
 
     def test_prepare_reference_and_source_audio_returns_error_for_invalid_reference(self):
         """Invalid reference audio should return a structured early error payload."""

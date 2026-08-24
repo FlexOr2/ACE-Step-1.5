@@ -1,6 +1,6 @@
 """Success payload builders for ``generate_music`` orchestration."""
 
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from acestep.gpu_config import get_global_gpu_config
 from loguru import logger
@@ -18,6 +18,7 @@ class GenerateMusicPayloadMixin:
         seed_value_for_ui: int,
         actual_batch_size: int,
         progress: Any,
+        requested_batch_size: Optional[int] = None,
         retake_seed_value_for_ui: str = "",
         retake_variance: float = 0.0,
     ) -> Dict[str, Any]:
@@ -29,7 +30,11 @@ class GenerateMusicPayloadMixin:
             pred_latents_cpu: CPU latent tensor preserved for extra outputs.
             time_costs: Updated time-cost payload including decode/offload timings.
             seed_value_for_ui: Seed value displayed in UI outputs.
-            actual_batch_size: Effective generation batch size.
+            actual_batch_size: Effective generation batch size, after any
+                VRAM-guard reduction.
+            requested_batch_size: Batch size the caller originally asked for,
+                before any VRAM-guard reduction. ``None`` when the caller did
+                not report it (keeps this a purely additive field).
             progress: Optional progress callback.
 
         Returns:
@@ -108,4 +113,6 @@ class GenerateMusicPayloadMixin:
             "extra_outputs": extra_outputs,
             "success": True,
             "error": None,
+            "requested_batch_size": requested_batch_size,
+            "delivered_batch_size": actual_batch_size,
         }

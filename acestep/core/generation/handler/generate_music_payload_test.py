@@ -106,6 +106,29 @@ class GenerateMusicPayloadMixinTests(unittest.TestCase):
         self.assertEqual(payload["extra_outputs"]["seed_value"], 7)
         self.assertEqual(payload["extra_outputs"]["pred_latents"].device.type, "cpu")
         self.assertEqual(progress_calls[0][0], 0.99)
+        self.assertIsNone(payload["requested_batch_size"])
+        self.assertEqual(payload["delivered_batch_size"], 1)
+
+    def test_build_success_payload_surfaces_requested_vs_delivered_batch_size(self):
+        """Payload must carry both batch numbers when the caller reports a reduction."""
+        host = _Host()
+        outputs = {}
+        pred_wavs = torch.ones(1, 2, 8)
+        pred_latents_cpu = torch.ones(1, 4, 3)
+
+        payload = host._build_generate_music_success_payload(
+            outputs=outputs,
+            pred_wavs=pred_wavs,
+            pred_latents_cpu=pred_latents_cpu,
+            time_costs={},
+            seed_value_for_ui=1,
+            actual_batch_size=1,
+            requested_batch_size=2,
+            progress=None,
+        )
+
+        self.assertEqual(payload["requested_batch_size"], 2)
+        self.assertEqual(payload["delivered_batch_size"], 1)
 
     def test_build_success_payload_handles_missing_optional_outputs_without_progress(self):
         """It handles absent optional output keys and no progress callback."""

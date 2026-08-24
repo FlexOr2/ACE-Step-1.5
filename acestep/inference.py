@@ -296,6 +296,13 @@ class GenerationResult:
     # Success Status
     success: bool = True
     error: Optional[str] = None
+    # Batch size actually asked for vs. delivered. `None` on failure, or
+    # when the caller predates this field. Set whenever they differ so a
+    # VRAM-guard reduction (see `_vram_guard_reduce_batch`) is never a
+    # silent downgrade — the caller gets fewer audios than requested with
+    # no signal otherwise.
+    requested_batch_size: Optional[int] = None
+    delivered_batch_size: Optional[int] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert result to dictionary for JSON serialization."""
@@ -924,6 +931,8 @@ def generate_music(
         dit_audios = result.get("audios", [])
         status_message = result.get("status_message", "")
         dit_extra_outputs = result.get("extra_outputs", {})
+        requested_batch_size = result.get("requested_batch_size")
+        delivered_batch_size = result.get("delivered_batch_size")
 
         # Use the seed list already prepared above (from config.seed or params.seed fallback)
         # actual_seed_list was computed earlier using dit_handler.prepare_seeds
@@ -1097,6 +1106,8 @@ def generate_music(
             extra_outputs=extra_outputs,
             success=True,
             error=None,
+            requested_batch_size=requested_batch_size,
+            delivered_batch_size=delivered_batch_size,
         )
 
     except Exception as e:

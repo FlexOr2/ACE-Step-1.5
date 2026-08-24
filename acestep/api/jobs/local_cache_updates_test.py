@@ -148,6 +148,71 @@ class LocalCacheUpdatesTests(unittest.TestCase):
         self.assertEqual("original prompt", payload[0]["metas"]["prompt"])
         self.assertEqual(1.0, payload[0]["progress"])
         self.assertEqual("succeeded", payload[0]["stage"])
+        self.assertIsNone(payload[0]["requested_batch_size"])
+        self.assertIsNone(payload[0]["delivered_batch_size"])
+
+    def test_update_local_cache_surfaces_vram_guard_batch_reduction(self):
+        """Cached payload must carry requested vs. delivered batch size when they differ.
+
+        The VRAM guard inside the DiT handler can silently cut a requested
+        batch down; this is the point where that reduction becomes visible
+        to `/query_result` pollers instead of disappearing into a log line.
+        """
+
+        cache = _FakeLocalCache()
+        store = _FakeStore({"job-7": SimpleNamespace(created_at=700.0, env="development")})
+        result = {
+            "audio_paths": ["a.mp3"],
+            "prompt": "p",
+            "lyrics": "l",
+            "metas": {},
+            "requested_batch_size": 2,
+            "delivered_batch_size": 1,
+        }
+
+        update_local_cache(
+            local_cache=cache,
+            store=store,
+            job_id="job-7",
+            result=result,
+            status="succeeded",
+            map_status=_map_status,
+            result_key_prefix="prefix:",
+            result_expire_seconds=600,
+        )
+
+        _, payload, _ = cache.calls[0]
+        self.assertEqual(2, payload[0]["requested_batch_size"])
+        self.assertEqual(1, payload[0]["delivered_batch_size"])
+
+    def test_update_local_cache_no_audio_path_still_carries_batch_fields(self):
+        """The audio-less success branch also reports requested vs. delivered batch."""
+
+        cache = _FakeLocalCache()
+        store = _FakeStore({"job-8": SimpleNamespace(created_at=800.0, env="development")})
+        result = {
+            "audio_paths": [],
+            "prompt": "p",
+            "lyrics": "l",
+            "metas": {},
+            "requested_batch_size": 3,
+            "delivered_batch_size": 2,
+        }
+
+        update_local_cache(
+            local_cache=cache,
+            store=store,
+            job_id="job-8",
+            result=result,
+            status="succeeded",
+            map_status=_map_status,
+            result_key_prefix="prefix:",
+            result_expire_seconds=600,
+        )
+
+        _, payload, _ = cache.calls[0]
+        self.assertEqual(3, payload[0]["requested_batch_size"])
+        self.assertEqual(2, payload[0]["delivered_batch_size"])
 
     def test_update_local_cache_writes_failed_payload(self):
         """Failed status should emit failed stage with zero progress."""
